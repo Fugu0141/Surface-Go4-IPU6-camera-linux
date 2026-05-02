@@ -24,8 +24,7 @@ sudo apt install -y \
     libevent-dev \
     libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
     gstreamer1.0-tools gstreamer1.0-plugins-good \
-    pipewire-libcamera \
-    cheese
+    pipewire-libcamera
 
 # ----------------------------------------
 # 2. Clone libcamera source
