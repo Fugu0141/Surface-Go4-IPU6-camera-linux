@@ -80,7 +80,7 @@ Key points:
 ## Setup
 
 ```bash
-git clone https://github.com/Hugu0141/Surface-Go4-IPU6-camera-linux.git
+git clone https://github.com/Fugu0141/Surface-Go4-IPU6-camera-linux.git
 cd Surface-Go4-IPU6-camera-linux
 chmod +x ipu6-camera-setup-en.sh
 ./ipu6-camera-setup-en.sh
