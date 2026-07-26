@@ -56,6 +56,22 @@ The Ubuntu 26.04 LTS branch is currently a test version.
 
 ---
 
+## Detailed Ubuntu 26.04 investigation
+
+A detailed technical report is available for the later Ubuntu 26.04 validation, including:
+
+- the OV5693 cold-start streaming failure;
+- the experimental `MIPI_CTRL00 = 0x2d` kernel workaround from linux-surface PR #2171;
+- Secure Boot and MOK-signed module installation;
+- cold-boot first-access and real-image validation;
+- the separate WirePlumber `/dev/media0` permission/discovery failure;
+- successful front and rear live video in GNOME Camera;
+- remaining autofocus, tuning, and startup-race limitations.
+
+See [Surface Go 4 IPU6 camera failure: root-cause analysis, workaround, and end-to-end validation](docs/surface-go4-ipu6-camera-root-cause-and-validation.md).
+
+---
+
 ## Hardware
 
 | Item | Details |
