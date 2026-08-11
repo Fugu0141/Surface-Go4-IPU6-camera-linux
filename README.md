@@ -70,6 +70,21 @@ A detailed technical report is available for the later Ubuntu 26.04 validation, 
 
 See [Surface Go 4 IPU6 camera failure: root-cause analysis, workaround, and end-to-end validation](docs/surface-go4-ipu6-camera-root-cause-and-validation.md).
 
+## Analysis and reference dump tools
+
+The repository also contains a source-level audit and clean-room comparison
+tooling. These do not modify the camera drivers:
+
+- [Surface Go 4 camera analysis](docs/surface-go4-camera-analysis.md)
+- [OV8865 / OV5693 register map](docs/sensor-register-map.md)
+- `tools/windows-camera-dump/collect.ps1`
+- `tools/linux-camera-dump/collect.sh`
+- `tools/compare-camera-dumps.py`
+
+The collectors write outside the repository by default. Their output may
+contain host and device identifiers; review and redact it before sharing. The
+Windows collector never copies SYS, DLL, or firmware binaries.
+
 ---
 
 ## Hardware

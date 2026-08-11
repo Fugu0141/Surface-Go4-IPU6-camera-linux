@@ -1,0 +1,6 @@
+windows/*
+linux/*
+reports/*
+!windows/.gitkeep
+!linux/.gitkeep
+!reports/.gitkeep
