@@ -67,7 +67,12 @@ if sudo test -e "$HOOK"; then
 fi
 
 TMP_HOOK="$(mktemp)"
-trap 'rm -f "$TMP_HOOK" "$TMP_INIT"' EXIT
+cleanup() {
+    rm -f "$TMP_HOOK" 2>/dev/null || true
+    sudo rm -f "$TMP_INIT" 2>/dev/null || true
+}
+trap cleanup EXIT
+
 cat > "$TMP_HOOK" <<'EOF'
 #!/bin/sh
 set -e
