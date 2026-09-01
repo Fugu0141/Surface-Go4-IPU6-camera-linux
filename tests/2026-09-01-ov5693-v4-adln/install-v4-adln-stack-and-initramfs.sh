@@ -72,8 +72,8 @@ modules=(
   "intel-ipu6-isys.ko:intel_ipu6_isys"
 )
 
-# Prove the negative-control evidence exists before switching the on-disk stack.
-NEG_RESULT="$ROOT/01-v4-unmodified/negative-control/02-result.txt"
+# Prove the recorded first-stream negative control before changing on-disk modules.
+NEG_RESULT="$ROOT/01-v4-unmodified/negative-control/05-result-summary.txt"
 if [ -f "$NEG_RESULT" ]; then
     grep -Fx 'exit_code=124' "$NEG_RESULT" >/dev/null || fail "negative-control exit code is not 124"
     grep -Fx 'frame_count=0' "$NEG_RESULT" >/dev/null || fail "negative-control frame count is not 0"
@@ -94,7 +94,7 @@ for item in "${modules[@]}"; do
     esac
 done
 
-# Confirm the current selected files are exactly the negative-control stack.
+# Confirm current resolution is exactly the negative-control stack.
 for item in "${modules[@]}"; do
     file="${item%%:*}"
     name="${item#*:}"
@@ -128,7 +128,7 @@ if ! sudo test -d "$OLD_BACKUP"; then
     sudo cp -a "$OLD_TARGET" "$OLD_BACKUP"
 fi
 
-# Stage the new directory first while the old one is still available.
+# Stage new modules before removing the duplicate old override.
 sudo rm -rf "$NEW_TARGET"
 sudo install -d -m 0755 "$NEW_TARGET"
 for item in "${modules[@]}"; do
@@ -136,7 +136,6 @@ for item in "${modules[@]}"; do
     sudo install -m 0644 "$STACK/$file" "$NEW_TARGET/$file"
 done
 
-# Remove the old duplicate from the module search tree so depmod selection is unambiguous.
 sudo rm -rf "$OLD_TARGET"
 MODULES_SWITCHED=1
 sudo depmod -a "$KVER"
@@ -155,7 +154,7 @@ sudo depmod -a "$KVER"
     done
 } > "$STAGE/01-after-depmod.txt" || fail "depmod did not select all four ADL-N modules; inspect 01-after-depmod.txt"
 
-# Build a completely separate initramfs. The existing boot image is untouched until this passes.
+# Build and verify a separate initramfs before changing /boot.
 TMPDIR_ROOT="$(sudo mktemp -d "/var/tmp/sg4-v4-adln-initramfs-$KVER.XXXXXX")"
 TMP_INIT="$TMPDIR_ROOT/initrd.img-$KVER"
 sudo mkinitramfs -v -o "$TMP_INIT" "$KVER" > "$STAGE/02-mkinitramfs.txt" 2>&1
@@ -180,7 +179,7 @@ done
     sudo sha256sum "$TMP_INIT"
 } > "$STAGE/04-temp-verification.txt"
 
-# Preserve the currently bootable initrd before replacing it.
+# Preserve current boot image then atomically replace it with the verified one.
 if ! sudo test -f "$BOOT_BACKUP"; then
     sudo cp --reflink=auto --preserve=mode,timestamps "$BOOT_TARGET" "$BOOT_BACKUP"
 fi
@@ -211,7 +210,7 @@ done
         echo "srcversion=$(modinfo -F srcversion "$name")"
     done
     echo
-    echo "===== current running modules (expected to remain negative-control until shutdown) ====="
+    echo "===== current running modules (expected negative-control versions until shutdown) ====="
     for item in "${modules[@]}"; do
         name="${item#*:}"
         echo "$name=$(cat "/sys/module/$name/srcversion" 2>/dev/null || true)"
