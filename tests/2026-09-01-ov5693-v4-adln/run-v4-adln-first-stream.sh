@@ -7,8 +7,19 @@ NEG="$ROOT/01-v4-unmodified/negative-control/05-result-summary.txt"
 KVER="$(uname -r)"
 CAM_ID='\_SB_.PC00.I2C3.CAMF'
 EXPECTED_DIR="/lib/modules/$KVER/updates/sg4-ov5693-v4-adln"
+WIREPLUMBER_RESTORE=0
 
 mkdir -p "$OUT"
+
+restore_wireplumber() {
+    if [ "$WIREPLUMBER_RESTORE" -eq 1 ]; then
+        if systemctl --user start wireplumber.service >/dev/null 2>&1; then
+            WIREPLUMBER_RESTORE=0
+        fi
+    fi
+}
+
+trap restore_wireplumber EXIT
 
 fail() {
     echo "ERROR: $*" | tee "$OUT/99-error.txt" >&2
@@ -67,9 +78,13 @@ else
     : > "$OUT/02-prior-stream-check.txt"
 fi
 
-# cam talks directly to libcamera; stop WirePlumber so desktop camera discovery
-# cannot race with this single deliberate stream attempt.
-systemctl --user stop wireplumber.service 2>/dev/null || true
+# cam talks directly to libcamera. If WirePlumber is currently active, stop it
+# temporarily so desktop camera discovery cannot race with this deliberate
+# stream. Restore it after the stream, and also from the EXIT trap on errors.
+if systemctl --user is-active --quiet wireplumber.service; then
+    WIREPLUMBER_RESTORE=1
+    systemctl --user stop wireplumber.service
+fi
 
 START_TIME="$(date --iso-8601=seconds)"
 printf '%s\n' "$START_TIME" > "$OUT/03-start-time.txt"
@@ -81,6 +96,14 @@ timeout 60s cam \
   > "$OUT/04-cam-front-first-300.log" 2>&1
 CAM_EXIT=$?
 set -e
+
+# Restore the user's multimedia session immediately after the deliberate stream.
+# If it was already inactive before the test, leave it inactive.
+if [ "$WIREPLUMBER_RESTORE" -eq 1 ]; then
+    systemctl --user start wireplumber.service \
+        || fail "failed to restore wireplumber.service after camera test"
+    WIREPLUMBER_RESTORE=0
+fi
 
 FRAME_COUNT="$(grep -c 'cam0-stream0 seq:' "$OUT/04-cam-front-first-300.log" || true)"
 LAST_SEQ="$(grep 'cam0-stream0 seq:' "$OUT/04-cam-front-first-300.log" | tail -n 1 || true)"
