@@ -6,8 +6,19 @@ OUT="$ROOT/01-v4-unmodified/negative-control"
 KVER="$(uname -r)"
 CAM_ID='\_SB_.PC00.I2C3.CAMF'
 EXPECTED_DIR="/lib/modules/$KVER/updates/sg4-ov5693-v4-unmodified"
+WIREPLUMBER_RESTORE=0
 
 mkdir -p "$OUT"
+
+restore_wireplumber() {
+    if [ "$WIREPLUMBER_RESTORE" -eq 1 ]; then
+        if systemctl --user start wireplumber.service >/dev/null 2>&1; then
+            WIREPLUMBER_RESTORE=0
+        fi
+    fi
+}
+
+trap restore_wireplumber EXIT
 
 fail() {
     echo "ERROR: $*" | tee "$OUT/99-error.txt" >&2
@@ -58,9 +69,13 @@ else
     : > "$OUT/02-prior-stream-check.txt"
 fi
 
-# WirePlumber is not needed by the cam tool. Stop it so that no desktop camera
-# monitor can race with this single deliberate libcamera stream attempt.
-systemctl --user stop wireplumber.service 2>/dev/null || true
+# WirePlumber is not needed by cam. If it is currently active, stop it only for
+# the deliberate stream and restore it afterwards. The EXIT trap also restores
+# it if the script exits early after the stop.
+if systemctl --user is-active --quiet wireplumber.service; then
+    WIREPLUMBER_RESTORE=1
+    systemctl --user stop wireplumber.service
+fi
 
 START_TIME="$(date --iso-8601=seconds)"
 printf '%s\n' "$START_TIME" > "$OUT/03-start-time.txt"
@@ -72,6 +87,12 @@ timeout 60s cam \
   > "$OUT/04-cam-front-first-300.log" 2>&1
 CAM_EXIT=$?
 set -e
+
+if [ "$WIREPLUMBER_RESTORE" -eq 1 ]; then
+    systemctl --user start wireplumber.service \
+        || fail "failed to restore wireplumber.service after camera test"
+    WIREPLUMBER_RESTORE=0
+fi
 
 FRAME_COUNT="$(grep -c 'cam0-stream0 seq:' "$OUT/04-cam-front-first-300.log" || true)"
 LAST_SEQ="$(grep 'cam0-stream0 seq:' "$OUT/04-cam-front-first-300.log" | tail -n 1 || true)"
