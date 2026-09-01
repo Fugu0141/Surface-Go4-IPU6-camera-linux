@@ -6,7 +6,8 @@ STAGE="$ROOT/01-v4-unmodified/initramfs-direct-install"
 KVER="$(uname -r)"
 BOOT_LINK="/boot/initrd.img-$KVER"
 BOOT_TARGET="$(readlink -f "$BOOT_LINK")"
-TMP_INIT="/tmp/sg4-v4-verified-initrd-$KVER"
+TMP_DIR=""
+TMP_INIT=""
 BACKUP_DIR="/var/lib/sg4-ov5693-v4-backup"
 BACKUP="$BACKUP_DIR/initrd.img-$KVER.pre-direct"
 EXPECTED_FW_RE='(^|/)usr/lib/firmware/intel/ipu/ipu6epadln_fw\.bin$|(^|/)lib/firmware/intel/ipu/ipu6epadln_fw\.bin$'
@@ -20,7 +21,9 @@ fail() {
 }
 
 cleanup() {
-    sudo rm -f "$TMP_INIT" 2>/dev/null || true
+    if [ -n "${TMP_DIR:-}" ]; then
+        sudo rm -rf -- "$TMP_DIR" 2>/dev/null || true
+    fi
 }
 trap cleanup EXIT
 
@@ -31,13 +34,16 @@ sudo test -x "$HOOK" || fail "firmware hook missing or not executable: $HOOK"
 command -v mkinitramfs >/dev/null 2>&1 || fail "mkinitramfs missing"
 command -v lsinitramfs >/dev/null 2>&1 || fail "lsinitramfs missing"
 
-sudo rm -f "$TMP_INIT"
+# Use a fresh root-owned directory each run so stale /tmp files can never block the test.
+TMP_DIR="$(sudo mktemp -d "/var/tmp/sg4-v4-verified-initramfs-$KVER.XXXXXX")"
+TMP_INIT="$TMP_DIR/initrd.img"
 
 {
     echo "Collected: $(date --iso-8601=seconds)"
     echo "Kernel: $KVER"
     echo "Boot link: $BOOT_LINK"
     echo "Boot target: $BOOT_TARGET"
+    echo "Temporary directory: $TMP_DIR"
     echo "Temporary image: $TMP_INIT"
     echo "Backup: $BACKUP"
     echo
