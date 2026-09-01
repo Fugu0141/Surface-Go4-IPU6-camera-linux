@@ -2,6 +2,7 @@
 set -u
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$ROOT/../.." && pwd)"
 OUT="$ROOT/00-baseline"
 mkdir -p "$OUT"
 
@@ -47,7 +48,7 @@ run_sh "16-cam-version.txt" 'command -v cam >/dev/null && cam --version || echo 
 run_sh "17-cam-list.txt" 'command -v cam >/dev/null && cam -l || echo "cam not installed"'
 run_sh "18-libcamera-packages.txt" 'dpkg-query -W "libcamera*" 2>/dev/null || true'
 run_sh "19-kernel-packages.txt" 'dpkg-query -W "linux-image*" "linux-headers*" 2>/dev/null | grep "$(uname -r)" || true'
-run_sh "20-git-logging-repo.txt" 'cd "'"$ROOT"'"/../../.." && git status --short --branch && git rev-parse HEAD'
+run_sh "20-git-logging-repo.txt" 'cd "'"$REPO_ROOT"'" && echo "repo=$(pwd)" && git status --short --branch && echo "HEAD=$(git rev-parse HEAD)" && echo "--- remotes ---" && git remote -v'
 
 # Kernel log: try without sudo first. If restricted, retry interactively with sudo.
 if dmesg -T >"$OUT/21-dmesg-full.txt" 2>&1; then
