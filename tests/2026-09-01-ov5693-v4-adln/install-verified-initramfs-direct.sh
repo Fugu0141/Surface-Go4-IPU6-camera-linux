@@ -19,6 +19,11 @@ fail() {
     exit 1
 }
 
+cleanup() {
+    sudo rm -f "$TMP_INIT" 2>/dev/null || true
+}
+trap cleanup EXIT
+
 [ "$KVER" = "7.0.0-30-generic" ] || fail "unexpected running kernel: $KVER"
 [ -n "$BOOT_TARGET" ] || fail "could not resolve $BOOT_LINK"
 sudo test -f "$BOOT_TARGET" || fail "boot initrd target missing: $BOOT_TARGET"
@@ -26,7 +31,7 @@ sudo test -x "$HOOK" || fail "firmware hook missing or not executable: $HOOK"
 command -v mkinitramfs >/dev/null 2>&1 || fail "mkinitramfs missing"
 command -v lsinitramfs >/dev/null 2>&1 || fail "lsinitramfs missing"
 
-rm -f "$TMP_INIT"
+sudo rm -f "$TMP_INIT"
 
 {
     echo "Collected: $(date --iso-8601=seconds)"
@@ -119,8 +124,6 @@ done
     echo "===== backup image hash ====="
     sudo sha256sum "$BACKUP"
 } > "$STAGE/06-installed-verification.txt"
-
-rm -f "$TMP_INIT"
 
 echo "Verified initramfs installed directly."
 echo "Firmware and all four experimental modules were confirmed before and after replacement."
