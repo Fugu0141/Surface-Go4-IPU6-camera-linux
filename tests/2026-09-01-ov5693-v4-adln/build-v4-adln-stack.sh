@@ -2,11 +2,11 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STAGE="$ROOT/02-v4-adln/stack-build"
+STAGE="$ROOT/02-v4-adln/stack-build-r2"
 KVER="$(uname -r)"
 KBUILD="/lib/modules/$KVER/build"
 SRC="$HOME/sg4-ov5693-v4-ubuntu-$KVER/source/linux-source-7.0.0"
-WORK="$HOME/sg4-ov5693-v4-adln-stack-$KVER"
+WORK="$HOME/sg4-ov5693-v4-adln-stack-r2-$KVER"
 STACK="$WORK/stack"
 MOK_PRIV="$HOME/sg4-ov5693-test/mok/MOK.priv"
 MOK_DER="$HOME/sg4-ov5693-test/mok/MOK.der"
@@ -31,7 +31,7 @@ fail() {
 [ -x "$SIGN_FILE" ] || fail "sign-file missing"
 
 if [ -e "$WORK" ]; then
-    fail "work directory already exists: $WORK (preserved deliberately; move/remove it only if you intend to rebuild)"
+    fail "r2 work directory already exists: $WORK (move/remove deliberately before rerunning)"
 fi
 
 mkdir -p "$STACK/ipu6" "$STACK/include/media"
@@ -46,9 +46,8 @@ cp "$SRC/include/media/ipu6-pci-table.h" "$STACK/include/media/ipu6-pci-table.h"
 cp "$STACK/ipu-bridge.c" "$STAGE/ipu-bridge.before.c"
 
 # Insert exactly one Surface Go 4 / Alder Lake-N match immediately after the
-# existing INT33BE Alder Lake-P match. Refuse to continue if the expected v4
-# context is not unique. This is the only functional delta from the v4
-# negative-control bridge source.
+# existing INT33BE Alder Lake-P match. Horizontal whitespace is deliberately
+# used for indentation matching; \s would also consume newlines in Python.
 python3 - "$STACK/ipu-bridge.c" <<'PY'
 from pathlib import Path
 import re
@@ -57,16 +56,18 @@ import sys
 path = Path(sys.argv[1])
 text = path.read_text()
 
-if 'PCI_DEVICE_ID_INTEL_IPU6EP_ADLN' in text and re.search(
-    r'IPU_SENSOR_CONFIG_MATCH_FL\(\s*"INT33BE"\s*,\s*PCI_DEVICE_ID_INTEL_IPU6EP_ADLN',
-    text,
-):
+adln_re = re.compile(
+    r'IPU_SENSOR_CONFIG_MATCH_FL\(\s*"INT33BE"\s*,\s*'
+    r'PCI_DEVICE_ID_INTEL_IPU6EP_ADLN\s*,\s*'
+    r'CSI2_CLK_NONCONTINUOUS\s*,\s*1\s*,\s*419200000\s*\),'
+)
+if adln_re.search(text):
     raise SystemExit('ADL-N INT33BE match already exists; refusing duplicate insertion')
 
 pattern = re.compile(
-    r'(\s*IPU_SENSOR_CONFIG_MATCH_FL\(\s*"INT33BE"\s*,\s*'
+    r'(?m)^([ \t]*)IPU_SENSOR_CONFIG_MATCH_FL\(\s*"INT33BE"\s*,\s*'
     r'PCI_DEVICE_ID_INTEL_IPU6EP_ADLP\s*,\s*'
-    r'CSI2_CLK_NONCONTINUOUS\s*,\s*1\s*,\s*419200000\s*\),)'
+    r'CSI2_CLK_NONCONTINUOUS\s*,\s*1\s*,\s*419200000\s*\),'
 )
 
 matches = list(pattern.finditer(text))
@@ -74,15 +75,19 @@ if len(matches) != 1:
     raise SystemExit(f'expected exactly one INT33BE ADLP v4 match, found {len(matches)}')
 
 m = matches[0]
-indent_match = re.search(r'(?m)^(\s*)IPU_SENSOR_CONFIG_MATCH_FL', m.group(1))
-indent = indent_match.group(1) if indent_match else '\t'
+indent = m.group(1)
 addition = (
     '\n'
     f'{indent}IPU_SENSOR_CONFIG_MATCH_FL("INT33BE", PCI_DEVICE_ID_INTEL_IPU6EP_ADLN,\n'
-    f'{indent}                           CSI2_CLK_NONCONTINUOUS, 1, 419200000),'
+    f'{indent}\t\t\t   CSI2_CLK_NONCONTINUOUS, 1, 419200000),'
 )
 text = text[:m.end()] + addition + text[m.end():]
 path.write_text(text)
+
+# Semantic validation is whitespace-insensitive, but values must match exactly.
+matches = adln_re.findall(text)
+if len(matches) != 1:
+    raise SystemExit(f'expected one exact ADL-N semantic match after insertion, found {len(matches)}')
 PY
 
 # Prove the intended delta before building.
@@ -96,12 +101,28 @@ after = Path(sys.argv[2]).read_text().splitlines(keepends=True)
 sys.stdout.writelines(difflib.unified_diff(before, after, fromfile='ipu-bridge.v4-unmodified.c', tofile='ipu-bridge.v4-adln.c'))
 PY
 
-# Require the exact new semantic entry and exactly one INT33BE ADL-N match.
-ADLN_COUNT="$(grep -Ec 'IPU_SENSOR_CONFIG_MATCH_FL\("INT33BE", PCI_DEVICE_ID_INTEL_IPU6EP_ADLN,' "$STACK/ipu-bridge.c" || true)"
-[ "$ADLN_COUNT" = "1" ] || fail "expected exactly one INT33BE ADL-N match, found $ADLN_COUNT"
-grep -A1 -F 'IPU_SENSOR_CONFIG_MATCH_FL("INT33BE", PCI_DEVICE_ID_INTEL_IPU6EP_ADLN,' "$STACK/ipu-bridge.c" \
-    | grep -F 'CSI2_CLK_NONCONTINUOUS, 1, 419200000),' >/dev/null \
-    || fail "ADL-N match has unexpected flags/lanes/link-frequency"
+# Independently prove that the only semantic ADL-N INT33BE entry has the exact
+# requested flag, lane count and link frequency. Do not depend on line wrapping.
+python3 - "$STACK/ipu-bridge.c" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+text = Path(sys.argv[1]).read_text()
+exact = re.compile(
+    r'IPU_SENSOR_CONFIG_MATCH_FL\(\s*"INT33BE"\s*,\s*'
+    r'PCI_DEVICE_ID_INTEL_IPU6EP_ADLN\s*,\s*'
+    r'CSI2_CLK_NONCONTINUOUS\s*,\s*1\s*,\s*419200000\s*\),'
+)
+all_adln = re.findall(
+    r'IPU_SENSOR_CONFIG_MATCH_FL\(\s*"INT33BE"\s*,\s*PCI_DEVICE_ID_INTEL_IPU6EP_ADLN\b',
+    text,
+)
+if len(all_adln) != 1:
+    raise SystemExit(f'expected exactly one INT33BE ADL-N entry, found {len(all_adln)}')
+if len(exact.findall(text)) != 1:
+    raise SystemExit('ADL-N match has unexpected flags/lanes/link-frequency')
+PY
 
 cat > "$STACK/Makefile" <<'EOF'
 # Unified external-module build for Surface Go 4 OV5693 v4 + ADL-N match test.
@@ -209,7 +230,7 @@ done
 } > "$STAGE/07-signature-and-hashes.txt" 2>&1
 
 cat > "$STAGE/README.md" <<EOF
-# v4 + Alder Lake-N isolated stack build
+# v4 + Alder Lake-N isolated stack build (r2)
 
 This build starts from the exact v4 semantic-backport source used by the negative control and changes only a copied \`ipu-bridge.c\` by adding:
 
