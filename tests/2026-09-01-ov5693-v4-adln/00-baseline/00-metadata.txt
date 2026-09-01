@@ -1,0 +1,2 @@
+Collected: 2026-09-02T00:14:04+09:00
+Purpose: Surface Go 4 OV5693 upstream v4 baseline before applying any new patches

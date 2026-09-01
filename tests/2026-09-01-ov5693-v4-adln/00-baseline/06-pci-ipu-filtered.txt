@@ -1,0 +1,12 @@
+$ lspci -nn -k | grep -i -A5 -B2 -E "image|ipu|camera|multimedia" || true
+	Kernel driver in use: i915
+	Kernel modules: i915, xe
+00:05.0 Multimedia controller [0480]: Intel Corporation Device [8086:462e]
+	Subsystem: Intel Corporation Device [8086:7270]
+	Kernel driver in use: intel-ipu6
+	Kernel modules: intel_ipu6
+00:08.0 System peripheral [0880]: Intel Corporation GNA Scoring Accelerator [8086:467e]
+	Subsystem: Intel Corporation Device [8086:7270]
+00:0a.0 Signal processing controller [1180]: Intel Corporation Platform Monitoring Technology [8086:467d] (rev 01)
+	Subsystem: Intel Corporation Device [8086:7270]
+	Kernel driver in use: intel_vsec

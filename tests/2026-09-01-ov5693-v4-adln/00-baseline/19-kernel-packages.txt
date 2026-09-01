@@ -1,0 +1,4 @@
+$ dpkg-query -W "linux-image*" "linux-headers*" 2>/dev/null | grep "$(uname -r)" || true
+linux-headers-7.0.0-30-generic	7.0.0-30.30
+linux-image-7.0.0-30-generic	7.0.0-30.30
+linux-image-unsigned-7.0.0-30-generic	

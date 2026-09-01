@@ -1,0 +1,15 @@
+$ lsmod | grep -E "(^|_)ipu6|ov5693|ov8865|dw9714" || true
+dw9714                 12288  1
+intel_ipu6_isys       139264  10
+videobuf2_dma_sg       20480  1 intel_ipu6_isys
+videobuf2_v4l2         36864  1 intel_ipu6_isys
+videobuf2_common       90112  4 videobuf2_v4l2,intel_ipu6_isys,videobuf2_dma_sg,videobuf2_memops
+intel_ipu6             77824  13 intel_ipu6_isys
+ipu_bridge             24576  2 intel_ipu6,intel_ipu6_isys
+ov5693                 24576  0
+ov8865                 32768  0
+v4l2_cci               12288  1 ov5693
+v4l2_fwnode            40960  14 ov7251,ov5693,intel_ipu6_isys,ov8865
+v4l2_async             32768  6 v4l2_fwnode,ov7251,dw9714,ov5693,intel_ipu6_isys,ov8865
+videodev              376832  24 v4l2_async,v4l2_fwnode,ov7251,videobuf2_v4l2,dw9714,ov5693,intel_ipu6_isys,ov8865
+mc                     90112  11 v4l2_async,videodev,ov7251,videobuf2_v4l2,dw9714,ov5693,intel_ipu6_isys,videobuf2_common,ov8865

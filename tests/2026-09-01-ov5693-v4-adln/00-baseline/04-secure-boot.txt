@@ -1,0 +1,2 @@
+$ command -v mokutil >/dev/null && mokutil --sb-state || echo "mokutil not installed"
+SecureBoot enabled

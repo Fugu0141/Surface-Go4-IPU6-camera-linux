@@ -1,0 +1,36 @@
+$ command -v cam >/dev/null && cam --version || echo "cam not installed"
+Invalid option --version
+Options:
+  -c, --camera camera ...                               Specify which camera to operate on, by id or by index
+  -h, --help                                            Display this help message
+  -I, --info                                            Display information about stream(s)
+  -l, --list                                            List all cameras
+      --list-controls                                   List cameras controls
+  -p, --list-properties                                 List cameras properties
+  -m, --monitor                                         Monitor for hotplug and unplug camera events
+
+Options valid in the context of --camera:
+  -C, --capture[=count]                                 Capture until interrupted by user or until <count> frames captured
+  -o, --orientation orientation                         Desired image orientation (rot0, rot180, mirror, flip)
+  -D, --display[=connector]                             Display viewfinder through DRM/KMS on specified connector
+  -F, --file[=filename]                                 Write captured frames to disk
+                                                        If the file name ends with a '/', it sets the directory in which
+                                                        to write files, using the default file name. Otherwise it sets the
+                                                        full file path and name. The first '#' character in the file name
+                                                        is expanded to the camera index, stream name and frame sequence number.
+                                                        If the file name ends with '.dng', then the frame will be written to
+                                                        the output file(s) in DNG format.
+                                                        If the file name ends with '.ppm', then the frame will be written to
+                                                        the output file(s) in PPM format.
+                                                        The default file name is 'frame-#.bin'.
+  -S, --sdl                                             Display viewfinder through SDL
+  -s, --stream key=value[,key=value,...] ...            Set configuration of a camera stream
+          colorspace=string                             Color space
+          height=integer                                Height in pixels
+          pixelformat=string                            Pixel format name
+          role=string                                   Role for the stream (viewfinder, video, still, raw)
+          width=integer                                 Width in pixels
+      --strict-formats                                  Do not allow requested stream format(s) to be adjusted
+      --metadata                                        Print the metadata for completed requests
+      --script script                                   Load a capture session configuration script from a file
+cam not installed

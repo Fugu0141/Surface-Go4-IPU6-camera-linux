@@ -1,0 +1,13 @@
+$ command -v cam >/dev/null && cam -l || echo "cam not installed"
+[0:24:28.466340751] [9148]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0
+[0:24:28.478981663] [9151] ERROR V4L2 v4l2_device.cpp:92 'dw9714 4-000c': Failed to open V4L2 device '': No such file or directory
+[0:24:28.479011637] [9151] ERROR CameraSensor camera_sensor_legacy.cpp:663 'ov8865 4-0010': Lens initialisation failed, lens disabled
+[0:24:28.479024439] [9151]  WARN CameraSensor camera_sensor_legacy.cpp:502 'ov8865 4-0010': No sensor delays found in static properties. Assuming unverified defaults.
+[0:24:28.479139268] [9151]  WARN CameraSensor camera_sensor_legacy.cpp:502 'ov5693 2-0036': No sensor delays found in static properties. Assuming unverified defaults.
+[0:24:28.480144486] [9151]  WARN IPAProxy ipa_proxy.cpp:192 Configuration file 'ov8865.yaml' not found for IPA module 'simple', falling back to '/usr/share/libcamera/ipa/simple/uncalibrated.yaml'
+[0:24:28.480336761] [9151]  INFO Camera camera_manager.cpp:223 Adding camera '\_SB_.PC00.I2C5.CAMR' for pipeline handler simple
+[0:24:28.480848515] [9151]  WARN IPAProxy ipa_proxy.cpp:192 Configuration file 'ov5693.yaml' not found for IPA module 'simple', falling back to '/usr/share/libcamera/ipa/simple/uncalibrated.yaml'
+[0:24:28.480947920] [9151]  INFO Camera camera_manager.cpp:223 Adding camera '\_SB_.PC00.I2C3.CAMF' for pipeline handler simple
+Available cameras:
+1: Internal back camera (\_SB_.PC00.I2C5.CAMR)
+2: Internal front camera (\_SB_.PC00.I2C3.CAMF)

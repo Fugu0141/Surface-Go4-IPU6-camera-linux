@@ -1,0 +1,1 @@
+$ find /sys/bus/i2c/devices -maxdepth 2 -type f \( -name name -o -name modalias \) -print -exec cat {} \; 2>/dev/null | grep -i -B2 -A2 -E "INT33BE|OVTI5693|ov5693|ov8865|dw9714" || true

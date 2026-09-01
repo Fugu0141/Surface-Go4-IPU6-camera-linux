@@ -1,0 +1,2 @@
+$ ls -la /sys/bus/i2c/devices/ | grep -E "INT33BE|OVTI5693|ov5693|ov8865|dw9714" || true
+lrwxrwxrwx 1 root root 0 Sep  1 23:49 i2c-INT33BE:00 -> ../../../devices/pci0000:00/0000:00:15.3/i2c_designware.2/i2c-2/i2c-INT33BE:00

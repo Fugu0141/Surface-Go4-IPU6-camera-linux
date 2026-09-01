@@ -1,0 +1,6 @@
+$ dpkg-query -W "libcamera*" 2>/dev/null || true
+libcamera-ipa:amd64	0.7.0-1ubuntu2
+libcamera-tools	0.7.0-1ubuntu2
+libcamera-v4l2:amd64	0.7.0-1ubuntu2
+libcamera0	
+libcamera0.7:amd64	0.7.0-1ubuntu2

@@ -1,0 +1,10 @@
+$ cd "/home/ko/Surface-Go4-IPU6-camera-linux" && echo "repo=$(pwd)" && git status --short --branch && echo "HEAD=$(git rev-parse HEAD)" && echo "--- remotes ---" && git remote -v
+repo=/home/ko/Surface-Go4-IPU6-camera-linux
+## main...origin/main
+ M tests/2026-09-01-ov5693-v4-adln/collect-baseline.sh
+?? Surface-Go4-IPU6-camera-linux/
+?? tests/2026-09-01-ov5693-v4-adln/00-baseline/
+HEAD=77b0075467f402f7c2a0f91c80c66870181f7a27
+--- remotes ---
+origin	https://github.com/Fugu0141/Surface-Go4-IPU6-camera-linux.git (fetch)
+origin	https://github.com/Fugu0141/Surface-Go4-IPU6-camera-linux.git (push)

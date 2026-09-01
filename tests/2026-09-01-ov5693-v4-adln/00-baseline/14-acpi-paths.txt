@@ -1,0 +1,6 @@
+$ for d in /sys/bus/i2c/devices/*; do n=$(cat "$d/name" 2>/dev/null || true); m=$(cat "$d/modalias" 2>/dev/null || true); if echo "$n $m $(basename "$d")" | grep -qiE "INT33BE|OVTI5693|ov5693|ov8865"; then echo "===== $d ====="; echo "name=$n"; echo "modalias=$m"; readlink -f "$d/firmware_node" 2>/dev/null || true; cat "$d/firmware_node/path" 2>/dev/null || true; fi; done
+===== /sys/bus/i2c/devices/i2c-INT33BE:00 =====
+name=INT33BE:00
+modalias=acpi:INT33BE:INT33BE:
+/sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:36/INT33BE:00
+\_SB_.PC00.I2C3.CAMF
