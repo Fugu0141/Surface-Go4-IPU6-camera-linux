@@ -46,7 +46,7 @@ command -v lsinitramfs >/dev/null 2>&1 || fail "lsinitramfs is required"
     zstdcat "$FW_ZST" | sha256sum
     echo
     echo "===== before initramfs matches ====="
-    lsinitramfs "/boot/initrd.img-$KVER" 2>/dev/null | grep -E '(^|/)intel/ipu/ipu6epadln_fw\.bin(\.zst)?$' || true
+    sudo lsinitramfs "/boot/initrd.img-$KVER" 2>/dev/null | grep -E '(^|/)intel/ipu/ipu6epadln_fw\.bin(\.zst)?$' || true
 } > "$STAGE/00-before.txt"
 
 if sudo test -e "$HOOK"; then
@@ -102,10 +102,10 @@ sudo update-initramfs -u -k "$KVER" > "$STAGE/01-update-initramfs.txt" 2>&1
     sudo cat "$HOOK"
     echo
     echo "===== after initramfs matches ====="
-    lsinitramfs "/boot/initrd.img-$KVER" 2>/dev/null | grep -E '(^|/)intel/ipu/ipu6epadln_fw\.bin(\.zst)?$' || true
+    sudo lsinitramfs "/boot/initrd.img-$KVER" 2>/dev/null | grep -E '(^|/)intel/ipu/ipu6epadln_fw\.bin(\.zst)?$' || true
 } > "$STAGE/02-after.txt"
 
-if ! lsinitramfs "/boot/initrd.img-$KVER" 2>/dev/null | grep -qE '(^|/)lib/firmware/intel/ipu/ipu6epadln_fw\.bin$'; then
+if ! sudo lsinitramfs "/boot/initrd.img-$KVER" 2>/dev/null | grep -qE '(^|/)(usr/)?lib/firmware/intel/ipu/ipu6epadln_fw\.bin$'; then
     fail "raw ADL-N firmware was not found in rebuilt initramfs; inspect 01-update-initramfs.txt and 02-after.txt"
 fi
 
