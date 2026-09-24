@@ -98,9 +98,11 @@ capture_sequence() {
     grep -q "analogue_gain: $AGAIN" "$dir/01-before.txt" || fail "$label: analogue gain mismatch"
     grep -q "digital_gain: $DGAIN" "$dir/01-before.txt" || fail "$label: digital gain mismatch"
 
-    local size_image
+    local size_image bytes_per_line
     size_image="$(awk '/Size Image/{print $4; exit}' "$dir/01-before.txt")"
+    bytes_per_line="$(awk '/Bytes per Line/{print $5; exit}' "$dir/01-before.txt")"
     [[ "$size_image" =~ ^[0-9]+$ ]] || fail "$label: could not parse Size Image"
+    [[ "$bytes_per_line" =~ ^[0-9]+$ ]] || fail "$label: could not parse Bytes per Line"
 
     sudo dmesg --color=never > "$dir/02-dmesg-before.txt"
     local before_lines
@@ -118,23 +120,31 @@ capture_sequence() {
     [ "$rc" -eq 0 ] || fail "$label capture failed with rc=$rc"
     [ -s "$seq" ] || fail "$label sequence file is empty"
 
-    local actual_bytes expected_bytes
+    # On the IPU6 ISYS node, Size Image may include extra allocation padding
+    # beyond the active image payload (observed as one extra line at 2592x1944).
+    # v4l2-ctl --stream-to writes the buffer's bytesused payload, so validate
+    # against bytes-per-line * active height rather than Size Image.
+    local payload_per_frame actual_bytes expected_bytes
+    payload_per_frame=$((bytes_per_line * h))
     actual_bytes="$(stat -c '%s' "$seq")"
-    expected_bytes=$((size_image * FRAMES))
+    expected_bytes=$((payload_per_frame * FRAMES))
 
     {
         echo "width=$w"
         echo "height=$h"
         echo "fourcc=$FOURCC"
-        echo "size_image=$size_image"
+        echo "bytes_per_line=$bytes_per_line"
+        echo "payload_per_frame=$payload_per_frame"
+        echo "size_image_allocation=$size_image"
         echo "frames=$FRAMES"
         echo "stream_skip=$SKIP"
         echo "actual_bytes=$actual_bytes"
-        echo "expected_bytes=$expected_bytes"
+        echo "expected_payload_bytes=$expected_bytes"
+        echo "allocation_padding_per_frame=$((size_image - payload_per_frame))"
     } > "$dir/05-sequence-layout.txt"
 
     [ "$actual_bytes" -eq "$expected_bytes" ] \
-        || fail "$label: sequence size $actual_bytes != expected $expected_bytes"
+        || fail "$label: sequence payload size $actual_bytes != expected $expected_bytes"
 
     sha256sum "$seq" > "$dir/06-sha256.txt"
     snapshot "$dir/07-after.txt"
